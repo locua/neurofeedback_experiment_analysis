@@ -29,7 +29,6 @@ for root, dirs, files in os.walk(directory):
 #print('a CSV file:', _acsv)
 #print('b CSV file:', _bcsv)
 
-
 # Load the CSV file into a pandas DataFrame
 pos_a_df = pd.read_csv(_acsv)
 pos_b_df = pd.read_csv(_bcsv)
@@ -127,7 +126,3 @@ if vis=='1':
     boxplot_stim_pos(b_df, ax2, 'Post neurofeedback posner', 0)
 
 plt.show(block=True)
-
-
-
-
