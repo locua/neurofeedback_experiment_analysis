@@ -113,6 +113,14 @@ def plot_basic(dat):
     ax.axhline(color='black')
     plt.show()
 
+def get_raw(dat):
+    cols = ['FP1', 'FP2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2', 'F7','F8', 'T7', 'T8', 'P7', 'P8', 'FZ', 'CZ', 'PZ', 'OZ', 'FC1', 'FC2',
+       'CP1', 'CP2', 'FC5', 'FC6', 'CP5', 'CP6', 'TP9', 'TP10', 'POZ', 'ECG',
+       'F1', 'F2', 'C1', 'C2', 'P1', 'P2', 'AF3', 'AF4', 'FC3', 'FC4', 'CP3',
+       'CP4', 'PO3', 'PO4', 'F5', 'F6', 'C5', 'C6', 'P5', 'P6', 'AF7', 'AF8',
+       'FT7', 'FT8', 'TP7', 'TP8', 'PO7', 'PO8', 'FT9', 'FT10', 'FPZ', 'CPZ']
+    return dat[cols]
+
 def plot_raw_all(dat):
     fig, ax = plt.subplots(figsize=(12, 6))
     cols = ['FP1', 'FP2', 'F3', 'F4', 'C3', 'C4', 'P3', 'P4', 'O1', 'O2', 'F7','F8', 'T7', 'T8', 'P7', 'P8', 'FZ', 'CZ', 'PZ', 'OZ', 'FC1', 'FC2',
@@ -124,15 +132,71 @@ def plot_raw_all(dat):
         ax.plot(df[col])
     plt.show()
 
+
+def topo_simple(data):
+    # General imports
+    import numpy as np
+    import matplotlib.pyplot as plt
+    from matplotlib import cm, colors, colorbar
+    
+    # Import MNE, as well as the MNE sample dataset
+    import mne
+    from mne import io
+    from mne.datasets import sample
+    from mne.viz import plot_topomap
+    from mne.time_frequency import psd_array_welch
+    
+    # FOOOF imports
+    from fooof import FOOOFGroup
+    from fooof.bands import Bands
+    from fooof.analysis import get_band_peak_fg
+    from fooof.plts.spectra import plot_spectrum
+
+    print("topoographies....")
+
+    raw = get_raw(data)
+    print(type(raw))
+
+    # Calculate power spectra across the the continuous data
+    spectra, freqs = psd_array_welch(raw.to_numpy(), sfreq=1000, fmin=1, fmax=40, n_overlap=0, n_fft=300, n_per_seg=350)
+    # Initialize a FOOOFGroup object, with desired settings
+    fg = FOOOFGroup(peak_width_limits=[1, 6], min_peak_height=0.15,
+                    peak_threshold=2., max_n_peaks=6, verbose=False)
+
+    print('here?')
+    
+    # Define the frequency range to fit
+    freq_range = [1, 30]
+
+    # Fit the power spectrum model across all channels
+    fg.fit(freqs, spectra, freq_range)
+
+    # Define frequency bands of interest
+    bands = Bands({'theta': [3, 7],
+                    'alpha': [7, 14],
+                    'beta': [15, 30]})
+    
+    # Plot the topography of alpha power
+    plot_topomap(alpha_pw, raw.info, cmap=cm.viridis, contours=0);
+
+
 if __name__ == '__main__':
     import sys
     file_path = sys.argv[1]
     df, fs, channels, p_names = load_data(file_path)
-    print(df.groupby('block_number')['block_name'].first())
-    print(df.head())
+    #print(df.groupby('block_number')['block_name'].first())
+    #print(df.head())
     print(df.columns)
-    print(df.signal_left.describe())
+    #print(df.signal_left.describe())
 
+    # Analysis
+    #print("AAI overall mean:", np.mean(df.signal_AAI))
+
+    # Plotting
     #plot_basic(df.signal_left)
     #plot_basic(df.signal_AAI)
-    plot_raw_all(df)
+    #plot_raw_all(df)
+
+    # Topographical analysis
+
+    topo_simple(df)
